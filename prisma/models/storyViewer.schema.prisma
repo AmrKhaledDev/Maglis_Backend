@@ -1,0 +1,10 @@
+model StoryViewer {
+    id        String   @id @default(cuid())
+    viewerId  String
+    viewer    User     @relation(fields: [viewerId], references: [id], onDelete: Cascade)
+    storyId   String
+    story     Story    @relation(fields: [storyId], references: [id], onDelete: Cascade)
+    createdAt DateTime @default(now())
+
+    @@unique([viewerId, storyId])
+}

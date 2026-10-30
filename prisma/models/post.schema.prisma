@@ -1,0 +1,25 @@
+enum Privacy {
+    PUBLIC
+    FRIENDS
+    PRIVATE
+}
+
+model Post {
+    id                 String       @id @default(cuid())
+    content            String?
+    privacy            Privacy      @default(PUBLIC)
+    commentsDisabled   Boolean      @default(false)
+    isPinnedToProfile  Boolean      @default(false)
+    createdAt          DateTime     @default(now())
+    updatedAt          DateTime     @updatedAt
+    authorId           String
+    showMediaInProfile Boolean      @default(false)
+    author             User         @relation(fields: [authorId], references: [id], onDelete: Cascade)
+    media              Media[]
+    savedPosts         SavePost[]
+    likes              Like[]
+    comments           Comment[]
+    hiddenPosts        HiddenPost[]
+
+    @@index([authorId])
+}

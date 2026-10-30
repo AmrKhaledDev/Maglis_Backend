@@ -1,0 +1,10 @@
+model Friendship {
+    id        String   @id @default(cuid())
+    userId    String
+    friendId  String
+    createdAt DateTime @default(now())
+    user      User     @relation("MyFriendships", fields: [userId], references: [id], onDelete: Cascade)
+    friend    User     @relation("Friends", fields: [friendId], references: [id], onDelete: Cascade)
+
+    @@unique([userId, friendId])
+}

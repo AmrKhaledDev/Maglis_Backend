@@ -1,0 +1,7 @@
+model VerificationToken {
+    token      String   @unique
+    identifier String   @unique
+    expires    DateTime
+
+    @@unique([identifier, token])
+}

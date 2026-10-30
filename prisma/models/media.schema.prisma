@@ -1,0 +1,13 @@
+enum MediaType {
+    IMAGE
+    VIDEO
+    PDF
+}
+
+model Media {
+    id     String    @id @default(cuid())
+    url    String
+    type   MediaType
+    postId String
+    post   Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+}

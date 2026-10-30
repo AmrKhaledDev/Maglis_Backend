@@ -1,0 +1,56 @@
+enum ConversationType {
+    DIRECT
+    GROUP
+}
+
+model Conversation {
+    id                  String               @id @default(cuid())
+    type                ConversationType
+    directKey           String?              @unique
+    messages            Message[]
+    conversationMembers ConversationMember[]
+    createdAt           DateTime             @default(now())
+    updatedAt           DateTime             @updatedAt
+}
+
+model ConversationMember {
+    id             String       @id @default(cuid())
+    conversationId String
+    userId         String
+    conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+    user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+    joinedAt       DateTime     @default(now())
+    clearedAt      DateTime?
+
+    @@unique([userId, conversationId])
+    @@index([userId])
+}
+
+model Message {
+    id              String         @id @default(cuid())
+    senderId        String
+    conversationId  String
+    sender          User           @relation(fields: [senderId], references: [id], onDelete: Cascade)
+    conversation    Conversation   @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+    content         String?
+    deletedBySender Boolean        @default(false)
+    createdAt       DateTime       @default(now())
+    isEdited        Boolean        @default(false)
+    status          MessageStatus  @default(SENT)
+    messageMedia    MessageMedia[]
+}
+
+enum MessageStatus {
+    SENT
+    SEEN
+}
+
+model MessageMedia {
+    id        String    @id @default(cuid())
+    mediaType MediaType
+    mediaUrl  String
+    mediaName String
+    mediaSize Int
+    messageId String
+    message   Message   @relation(fields: [messageId], references: [id], onDelete: Cascade)
+}

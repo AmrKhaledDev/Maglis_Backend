@@ -1,0 +1,14 @@
+model Story {
+    id          String        @id @default(cuid())
+    userId      String
+    user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+    media       String?
+    mediaType   MediaType?
+    contentText String?
+    color       String?
+    storyViews  StoryViewer[]
+    isPrivate   Boolean       @default(false)
+    expiresAt   DateTime
+
+    createdAt DateTime @default(now())
+}

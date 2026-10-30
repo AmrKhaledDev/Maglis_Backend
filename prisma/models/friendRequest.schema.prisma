@@ -1,0 +1,10 @@
+model FriendRequest {
+    id         String   @id @default(cuid())
+    senderId   String
+    receiverId String
+    sender     User     @relation("Sender", fields: [senderId], references: [id], onDelete: Cascade)
+    receiver   User     @relation("Receiver", fields: [receiverId], references: [id], onDelete: Cascade)
+    createdAt  DateTime @default(now())
+
+    @@unique([senderId, receiverId])
+}

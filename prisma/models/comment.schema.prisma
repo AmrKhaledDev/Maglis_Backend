@@ -1,0 +1,17 @@
+model Comment {
+    id              String           @id @default(cuid())
+    content         String?
+    image           String?
+    postId          String
+    userId          String
+    isFeatured      Boolean          @default(false)
+    isEdited        Boolean          @default(false)
+    isPinned        Boolean          @default(false)
+    createdAt       DateTime         @default(now())
+    likeForComments LikeForComment[]
+    parentId        String?
+    post            Post             @relation(fields: [postId], references: [id], onDelete: Cascade)
+    user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+    parent          Comment?         @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+    replies         Comment[]        @relation("CommentReplies")
+}

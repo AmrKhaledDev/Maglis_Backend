@@ -1,0 +1,15 @@
+enum SocialPlatform {
+    GITHUB
+    FACEBOOK
+    INSTAGRAM
+    X
+    LINKEDIN
+}
+
+model SocialLink {
+    id       String         @id @default(cuid())
+    link     String
+    platform SocialPlatform
+    userId   String
+    user     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
