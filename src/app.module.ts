@@ -1,10 +1,16 @@
 import { Module } from '@nestjs/common';
-import { AuthModule } from './auth/auth.module.js';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
+import { AuthModule } from './auth/auth.module.js';
+import { UsersModule } from './users/users.module.js';
+import { CloudinaryModule } from './cloudinary/cloudinary.module.js';
+import { PostsModule } from './posts/posts.module.js';
 // ==================================================
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
     JwtModule.registerAsync({
       global: true,
       imports: [ConfigModule],
@@ -14,12 +20,11 @@ import { JwtModule } from '@nestjs/jwt';
         signOptions: { expiresIn: '7d' },
       }),
     }),
-    ConfigModule.forRoot({
-      isGlobal: true,
-    }),
+
+    CloudinaryModule,
     AuthModule,
+    UsersModule,
+    PostsModule,
   ],
-  controllers: [],
-  providers: [],
 })
 export class AppModule {}

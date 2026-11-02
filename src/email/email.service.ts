@@ -65,10 +65,7 @@ export class EmailService {
   `,
       });
     } catch (error) {
-      this.logger.error(
-        `Failed to send verification email to ${email}`,
-        error instanceof Error ? error.stack : String(error),
-      );
+      this.logger.error(`Failed to send verification email to ${email}`, error);
       throw new InternalServerErrorException(
         'تعذر إرسال رابط التحقق. حاول مرة أخرى لاحقًا',
       );

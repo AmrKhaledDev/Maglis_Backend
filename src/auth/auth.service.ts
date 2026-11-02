@@ -7,15 +7,16 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { Prisma } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import { Response } from 'express';
 import { EmailService } from '../email/email.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { VerificationTokenService } from '../verification-token/verification-token.service.js';
-import { RegisterDto } from './schemas/register.schema.js';
-import { Prisma } from '@prisma/client';
 import { LoginDto } from './schemas/login.schema.js';
-import { JwtService } from '@nestjs/jwt';
-import { Response } from 'express';
+import { RegisterDto } from './schemas/register.schema.js';
+import { SessionWithRelations } from './types/SessionWithRelations.type.js';
 // ===========================================================================================
 @Injectable()
 export class AuthService {
@@ -64,10 +65,7 @@ export class AuthService {
       return { success: true, message: 'تم تسجيل الدخول بنجاح.' };
     } catch (error) {
       if (error instanceof HttpException) throw error;
-      this.logger.error(
-        'Failed login',
-        error instanceof Error ? error.stack : String(error),
-      );
+      this.logger.error('Failed login', error);
       throw new InternalServerErrorException(
         'حدث خطأ أثناء تسجيل دخولك. تأكد من الإنترنت وأعد المحاولة.',
       );
@@ -113,17 +111,13 @@ export class AuthService {
       )
         throw new ConflictException('المستخدم موجود بالفعل.');
       else {
-        this.logger.error(
-          'Failed to register user',
-          error instanceof Error ? error.stack : String(error),
-        );
+        this.logger.error('Failed to register user', error);
         throw new InternalServerErrorException(
           'المستخدم موجود بالفعل. برجاء تسجيل الدخول.',
         );
       }
     }
   }
-
   async logout(res: Response) {
     res.clearCookie('access_token', {
       httpOnly: true,
@@ -131,5 +125,53 @@ export class AuthService {
       sameSite: 'lax',
     });
     return { success: true, message: 'تم تسجيل الخروج بنجاح.' };
+  }
+  async getMe(userId: string) {
+    const user: SessionWithRelations | null = await this.prisma.user.findUnique(
+      {
+        where: { id: userId, emailVerified: true },
+        include: {
+          savedPosts: {
+            select: {
+              postId: true,
+            },
+          },
+          sender: {
+            select: {
+              id: true,
+              receiverId: true,
+            },
+          },
+          followings: {
+            select: {
+              followingId: true,
+            },
+          },
+          _count: {
+            select: {
+              receiver: true,
+            },
+          },
+          friendships: {
+            select: {
+              friendId: true,
+            },
+          },
+          blocks: {
+            select: {
+              blockedId: true,
+            },
+          },
+          blocked: {
+            select: {
+              blockerId: true,
+            },
+          },
+        },
+        omit: { password: true },
+      },
+    );
+    if (!user) throw new NotFoundException('لم نعثر على حسابك.');
+    return user;
   }
 }

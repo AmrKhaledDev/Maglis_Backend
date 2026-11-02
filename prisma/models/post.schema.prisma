@@ -4,22 +4,36 @@ enum Privacy {
     PRIVATE
 }
 
+enum MediaType {
+    IMAGE
+    VIDEO
+    PDF
+}
+
 model Post {
     id                 String       @id @default(cuid())
     content            String?
     privacy            Privacy      @default(PUBLIC)
     commentsDisabled   Boolean      @default(false)
     isPinnedToProfile  Boolean      @default(false)
-    createdAt          DateTime     @default(now())
-    updatedAt          DateTime     @updatedAt
     authorId           String
     showMediaInProfile Boolean      @default(false)
     author             User         @relation(fields: [authorId], references: [id], onDelete: Cascade)
-    media              Media[]
+    media              PostMedia[]
     savedPosts         SavePost[]
     likes              Like[]
     comments           Comment[]
     hiddenPosts        HiddenPost[]
+    createdAt          DateTime     @default(now())
+    updatedAt          DateTime     @updatedAt
 
     @@index([authorId])
+}
+
+model PostMedia {
+    id     String    @id @default(cuid())
+    url    String
+    type   MediaType
+    postId String
+    post   Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
 }
