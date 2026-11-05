@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   HttpException,
   Injectable,
   InternalServerErrorException,
@@ -9,94 +10,94 @@ import {
 } from '@nestjs/common';
 import { MediaType, Prisma } from '@prisma/client';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/client';
+import { boolean } from 'zod';
 import { PrismaService } from '../prisma/prisma.service.js';
-import { CreatePostDto } from './schemas/create-post.schema.js';
+import { postInclude } from '../prisma/fragments/post/post.include.js';
+import { postWhere } from '../prisma/fragments/post/post.where.js';
+import { videoWhere } from '../prisma/fragments/post/video.where.js';
+import { CreatePostDto } from './schemas/CreatePost.schema.js';
 import { Post } from './types/Post.type.js';
 // =============================================================
 @Injectable()
 export class PostsService {
-  private readonly logger = new Logger('Post Service');
+  private readonly logger = new Logger(PostsService.name);
   constructor(private readonly prismaService: PrismaService) {}
 
   async getPosts(userId: string) {
-    const user = await this.prismaService.user.findUnique({
-      where: {
-        id: userId,
-      },
-      select: { id: true },
-    });
-    if (!user) return [];
     try {
-      const posts: Post[] = await this.prismaService.post.findMany({
+      const user = await this.prismaService.user.findUnique({
         where: {
-          OR: [
-            { privacy: 'PUBLIC' },
-            { privacy: 'PRIVATE', authorId: user.id },
-            {
-              privacy: 'FRIENDS',
-              author: {
-                friendships: {
-                  some: {
-                    friendId: user.id,
-                  },
-                },
-              },
-            },
-            { privacy: 'FRIENDS', authorId: user.id },
-          ],
-          hiddenPosts: {
-            none: {
-              userId: user.id,
-            },
-          },
-          author: {
-            blocked: {
-              none: {
-                blockerId: user.id,
-              },
-            },
-            blocks: {
-              none: {
-                blockedId: user.id,
-              },
-            },
-          },
+          id: userId,
         },
-        include: {
-          author: {
-            select: {
-              id: true,
-              name: true,
-              professionalMode: true,
-              image: true,
-              username: true,
-            },
-          },
-          media: true,
-          likes: {
-            select: {
-              userId: true,
-              user: {
-                select: {
-                  image: true,
-                  name: true,
-                  professionalMode: true,
-                  bio: true,
-                },
-              },
-            },
-          },
-          _count: {
-            select: {
-              comments: true,
-            },
-          },
-        },
+        select: { id: true },
+      });
+      if (!user) return [];
+      const posts: Post[] = await this.prismaService.post.findMany({
+        where: postWhere(user.id),
+        include: postInclude,
         orderBy: { createdAt: 'desc' },
       });
-      return posts;
+      return { success: true, posts };
     } catch (error) {
+      this.logger.error('Failed get all posts', error);
       return [];
+    }
+  }
+
+  async getPost(userId: string, postId: string) {
+    try {
+      const user = await this.prismaService.user.findUnique({
+        where: {
+          id: userId,
+        },
+        select: { id: true },
+      });
+      if (!user)
+        throw new NotFoundException(
+          'يتعذر جلب المنشور, لم نستطع التعرف على حسابك.',
+        );
+      const ownerPost = await this.prismaService.post.findFirst({
+        where: {
+          author: {
+            posts: { some: { id: postId } },
+          },
+        },
+        select: {
+          author: {
+            select: {
+              blockedByUsers: { select: { blockerId: true } },
+              blockedUsers: { select: { blockedId: true } },
+            },
+          },
+        },
+      });
+      if (!ownerPost)
+        throw new NotFoundException(
+          'يتعذر جلب المنشور, ربما تم حذفه او المعرف الخاص بالمنشور غير صحيح.',
+        );
+      const isBlocked = ownerPost.author.blockedUsers.some(
+        (block) => block.blockedId === userId,
+      );
+      const isBlocker = ownerPost.author.blockedByUsers.some(
+        (block) => block.blockerId === userId,
+      );
+      if (isBlocked || isBlocker)
+        throw new ForbiddenException('لا تملك صلاحية مشاهدة هذا المنشور.');
+      const post = await this.prismaService.post.findFirst({
+        where: {
+          AND: [{ id: postId }, postWhere(user.id)],
+        },
+        include: postInclude,
+      });
+      if (!post)
+        throw new NotFoundException(
+          'المنشور غير موجود أو لا يمكنك الوصول إليه.',
+        );
+      return { success: true, post };
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+      this.logger.error('Failed to get single post', error);
+      throw new InternalServerErrorException('حدث خطأ, يتعذر جلب المنشور.');
     }
   }
 
@@ -226,6 +227,31 @@ export class PostsService {
       throw new InternalServerErrorException(
         'حدث خطأ غير متوقع أثناء حذف المنشور. حاول مرة أخرى لاحقاً.',
       );
+    }
+  }
+
+  async getVideos(userId: string) {
+    try {
+      const user = await this.prismaService.user.findUnique({
+        where: {
+          id: userId,
+        },
+        select: { id: true },
+      });
+      if (!user) return [];
+      const videos: Post[] = await this.prismaService.post.findMany({
+        where: videoWhere(user.id),
+        include: postInclude,
+        orderBy: [
+          { createdAt: 'desc' },
+          { author: { followersCount: 'desc' } },
+        ],
+      });
+      const filteredVideos = videos.filter((video) => video.media.length === 1);
+      return { success: boolean, videos: filteredVideos };
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+      return [];
     }
   }
 }

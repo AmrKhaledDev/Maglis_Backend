@@ -14,13 +14,14 @@ import { Response } from 'express';
 import { EmailService } from '../email/email.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { VerificationTokenService } from '../verification-token/verification-token.service.js';
-import { LoginDto } from './schemas/login.schema.js';
-import { RegisterDto } from './schemas/register.schema.js';
+import { LoginDto } from './schemas/Login.schema.js';
+import { RegisterDto } from './schemas/Register.schema.js';
 import { SessionWithRelations } from './types/SessionWithRelations.type.js';
+import { userSelect } from '../prisma/fragments/auth/user.select.js';
 // ===========================================================================================
 @Injectable()
 export class AuthService {
-  private readonly logger = new Logger();
+  private readonly logger = new Logger(AuthService.name);
   constructor(
     private readonly prisma: PrismaService,
     private readonly verificationTokenService: VerificationTokenService,
@@ -130,45 +131,7 @@ export class AuthService {
     const user: SessionWithRelations | null = await this.prisma.user.findUnique(
       {
         where: { id: userId, emailVerified: true },
-        include: {
-          savedPosts: {
-            select: {
-              postId: true,
-            },
-          },
-          sender: {
-            select: {
-              id: true,
-              receiverId: true,
-            },
-          },
-          followings: {
-            select: {
-              followingId: true,
-            },
-          },
-          _count: {
-            select: {
-              receiver: true,
-            },
-          },
-          friendships: {
-            select: {
-              friendId: true,
-            },
-          },
-          blocks: {
-            select: {
-              blockedId: true,
-            },
-          },
-          blocked: {
-            select: {
-              blockerId: true,
-            },
-          },
-        },
-        omit: { password: true },
+        select: userSelect,
       },
     );
     if (!user) throw new NotFoundException('لم نعثر على حسابك.');

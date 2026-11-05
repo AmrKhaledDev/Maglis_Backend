@@ -14,7 +14,7 @@ model User {
     name                String
     email               String               @unique
     password            String?
-    emailVerified       Boolean?
+    emailVerified       Boolean              @default(false)
     image               String?
     posts               Post[]
     savedPosts          SavePost[]
@@ -35,15 +35,15 @@ model User {
     professionalMode    Boolean              @default(false)
     education           String?
     jobTitle            String?
-    likes               Like[]
-    comments            Comment[]
-    likeForComments     LikeForComment[]
     city                String?
+    comments            Comment[]
+    likes               Like[]
+    likeForComments     LikeForComment[]
     socialLinks         SocialLink[]
     stories             Story[]
     hiddenPosts         HiddenPost[]
-    blocks              Block[]              @relation("Blocker")
-    blocked             Block[]              @relation("Blocked")
+    blockedUsers        Block[]              @relation("Blocker")
+    blockedByUsers      Block[]              @relation("Blocked")
     friends             Friendship[]         @relation("Friends")
     friendships         Friendship[]         @relation("MyFriendships")
     storyViewers        StoryViewer[]

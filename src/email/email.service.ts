@@ -8,7 +8,7 @@ import nodemailer from 'nodemailer';
 // ======================================
 @Injectable()
 export class EmailService {
-  private readonly logger = new Logger();
+  private readonly logger = new Logger(EmailService.name);
   async sendEmail(
     email: string,
     name: string,

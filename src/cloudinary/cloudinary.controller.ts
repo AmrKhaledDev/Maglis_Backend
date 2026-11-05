@@ -9,11 +9,16 @@ import 'multer';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { CloudinaryService } from './cloudinary.service.js';
 import { Request } from 'express';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 // =================================================================
+@ApiTags('Upload Files')
 @Controller('cloudinary')
 export class CloudinaryController {
   constructor(private readonly clouadinaryService: CloudinaryService) {}
 
+  @ApiOperation({
+    summary: 'Upload a media file',
+  })
   @Post('upload')
   @UseInterceptors(
     FileInterceptor('file', {

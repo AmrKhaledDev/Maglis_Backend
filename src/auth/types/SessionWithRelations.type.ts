@@ -1,9 +1,22 @@
 import { Prisma } from '@prisma/client';
 // ===========================================
-type User = Prisma.UserGetPayload<{
-  include: {
+export type SessionWithRelations = Prisma.UserGetPayload<{
+  select: {
+    id: true;
+    name: true;
+    email: true;
+    emailVerified: true;
+    image: true;
+    cover: true;
+    bio: true;
+    username: true;
+    role: true;
+    professionalMode: true;
+    city: true;
     savedPosts: {
-      select: { postId: true };
+      select: {
+        postId: true;
+      };
     };
     sender: {
       select: {
@@ -26,16 +39,15 @@ type User = Prisma.UserGetPayload<{
         friendId: true;
       };
     };
-    blocks: {
+    blockedUsers: {
       select: {
         blockedId: true;
       };
     };
-    blocked: {
+    blockedByUsers: {
       select: {
         blockerId: true;
       };
     };
   };
 }>;
-export type SessionWithRelations = Omit<User, 'password'>;

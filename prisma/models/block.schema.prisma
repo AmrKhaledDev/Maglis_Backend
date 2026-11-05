@@ -1,10 +1,10 @@
 model Block {
-    id        String   @id @default(cuid())
-    blockerId String
-    blockedId String
-    blocker   User     @relation("Blocker", fields: [blockerId], references: [id], onDelete: Cascade)
-    blocked   User     @relation("Blocked", fields: [blockedId], references: [id], onDelete: Cascade)
-    createdAt DateTime @default(now())
+    id            String   @id @default(cuid())
+    blockerId     String
+    blockedId     String
+    blockedUser   User     @relation("Blocker", fields: [blockerId], references: [id], onDelete: Cascade)
+    blockedByUser User     @relation("Blocked", fields: [blockedId], references: [id], onDelete: Cascade)
+    createdAt     DateTime @default(now())
 
     @@unique([blockerId, blockedId])
 }

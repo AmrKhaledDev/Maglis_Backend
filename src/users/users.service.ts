@@ -11,7 +11,7 @@ import { UserWithSocialLink } from './types/UserWithSocialLink.type.js';
 // ==========================================================================
 @Injectable()
 export class UsersService {
-  private readonly logger = new Logger();
+  private readonly logger = new Logger(UsersService.name);
   constructor(private readonly prisma: PrismaService) {}
 
   async getProfile(userId: string) {

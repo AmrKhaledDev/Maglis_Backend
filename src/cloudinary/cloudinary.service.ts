@@ -7,7 +7,7 @@ import cloudinary from './cloudinary.config.js';
 // =============================================
 @Injectable()
 export class CloudinaryService {
-  private readonly logger = new Logger();
+  private readonly logger = new Logger(CloudinaryService.name);
   async upload(file: Express.Multer.File) {
     try {
       const base64 = file.buffer.toString('base64');
